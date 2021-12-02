@@ -6,6 +6,23 @@
 
 int chat_with_client(struct Calc *calc, int client_fd);
 
+struct ConnInfo {
+	int clientfd;
+	struct Calc *calc;
+};
+
+void *worker(void *arg) {
+	struct ConnInfo *info = arg;
+
+	pthread_detach(pthread_self());
+
+	chat_with_client(info->calc, info->clientfd);
+	close(info->clientfd);
+	free(info);
+
+	return NULL;
+}
+
 int main(int argc, char **argv) {
 	if (argc != 2) {
 		exit(0); 	// incorrect number of command line argument
@@ -21,10 +38,22 @@ int main(int argc, char **argv) {
 	int keep_going = 1;
 	while (keep_going) {
 		int client_fd = Accept(server_fd, NULL, NULL);
-		if (client_fd > 0) {
-			keep_going = chat_with_client(calc, client_fd);
-			close(client_fd);
+		if (client_fd < 0) { 
+			printf("Fatal: Error accepting client connection");
+			return 0;
+		}		// fatal: Error accepting client connection
+		
+		struct ConnInfo *info = malloc(sizeof(struct ConnInfo));
+		info->clientfd = client_fd;
+		info->calc = calc;
+
+		pthread_t thr_id;
+		if (pthread_create(&thr_id, NULL, worker, info) != 0)
+		{
+			printf("Fatal: pthread_create failed");
+			return 0;		 // fatal: pthread_create failed
 		}
+		
 	}
 	close(server_fd);
 
@@ -73,3 +102,4 @@ int chat_with_client(struct Calc *calc, int client_fd) {
 	}
 	return 1;
 }
+
