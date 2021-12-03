@@ -7,6 +7,7 @@
 #include <sstream>
 #include <cctype>
 #include <algorithm>
+#include <pthread.h>
 
 struct Calc {
 private:
@@ -20,6 +21,8 @@ public:
     int evalExpr(const std::string &expr, int &result);
 
     int var_exist(std::string var);
+
+    pthread_mutex_t lock;
 private:
     // tokenize expression
     std::vector<std::string> tokenize(const std::string &expr);
