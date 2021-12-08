@@ -13,17 +13,7 @@ struct Calc{
 private:
     // fields
     std::map<std::string, int> var_dict;
-public:
-    // public member functions
-    Calc();
-    ~Calc();
 
-    int evalExpr(const std::string &expr, int &result);
-
-    int var_exist(std::string var);
-
-    pthread_mutex_t lock;
-private:
     // tokenize expression
     std::vector<std::string> tokenize(const std::string &expr);
 
@@ -35,13 +25,24 @@ private:
 
     // check whether op is an operator
     int is_operator(std::string op);
+
+public:
+    pthread_mutex_t lock;
+
+    // public member functions
+    Calc();
+    ~Calc();
+
+    int evalExpr(const std::string &expr, int &result);
+
+    int var_exist(std::string var);
 };
 
 // constructor
-Calc::Calc() {}
+Calc::Calc() {pthread_mutex_init(&this->lock, NULL);}
 
 // destructor
-Calc::~Calc() {}
+Calc::~Calc() {pthread_mutex_destroy(&this->lock);}
 
 extern "C" struct Calc *calc_create(void) {
     return new Calc();
@@ -73,6 +74,7 @@ extern "C" int Calc::evalExpr(const std::string &expr, int &result) {
             if (is_integer(operand) == 1)       // if operand is integer
             {
                 result = std::stoi(operand);
+                pthread_mutex_unlock(&this->lock);
                 return 1;       // evaluation succeeds
             }
             else if (is_variable(operand) == 1)     // if operand is variable
@@ -80,6 +82,7 @@ extern "C" int Calc::evalExpr(const std::string &expr, int &result) {
                 if (var_exist(operand) == 1)        // check whether variable is in the dictionary
                 {
                     result = this->var_dict.at(operand);
+                    pthread_mutex_unlock(&this->lock);
                     return 1;       // evaluation succeeds
                 }
             }
@@ -100,22 +103,27 @@ extern "C" int Calc::evalExpr(const std::string &expr, int &result) {
                 {
                 case '+':
                     result = std::stoi(operand1) + std::stoi(operand2);
+                    pthread_mutex_unlock(&this->lock);
                     return 1;
                     break;
                 case '-':
                     result = std::stoi(operand1) - std::stoi(operand2);
+                    pthread_mutex_unlock(&this->lock);
                     return 1;
                     break;
                 case '*':
                     result = std::stoi(operand1) * std::stoi(operand2);
+                    pthread_mutex_unlock(&this->lock);
                     return 1;
                     break;
                 case '/':
                     if (std::stoi(operand2) == 0) {     // divide by zero error
                         // std::cout << "Expression is invalid (attempt to divide by 0)." << std::endl;
+                        pthread_mutex_unlock(&this->lock);
                         return 0;
                     }
                     result = std::stoi(operand1) / std::stoi(operand2);
+                    pthread_mutex_unlock(&this->lock);
                     return 1;
                     break;
                 default:
@@ -127,6 +135,7 @@ extern "C" int Calc::evalExpr(const std::string &expr, int &result) {
             {   
                 if (var_exist(operand1) == 0)       // return 0 if operand1 is not in dictionary
                 {
+                    pthread_mutex_unlock(&this->lock);
                     return 0;
                 }
                 
@@ -134,22 +143,27 @@ extern "C" int Calc::evalExpr(const std::string &expr, int &result) {
                 {
                 case '+':
                     result = var_dict.at(operand1) + std::stoi(operand2);
+                    pthread_mutex_unlock(&this->lock);
                     return 1;
                     break;
                 case '-':
                     result = var_dict.at(operand1) - std::stoi(operand2);
+                    pthread_mutex_unlock(&this->lock);
                     return 1;
                     break;
                 case '*':
                     result = var_dict.at(operand1) * std::stoi(operand2);
+                    pthread_mutex_unlock(&this->lock);
                     return 1;
                     break;
                 case '/':
                     if (std::stoi(operand2) == 0) {
                         // std::cout << "Expression is invalid (attempt to divide by 0)." << std::endl;
+                        pthread_mutex_unlock(&this->lock);
                         return 0;
                     }
                     result = var_dict.at(operand1) / std::stoi(operand2);
+                    pthread_mutex_unlock(&this->lock);
                     return 1;
                     break;
                 default:
@@ -161,6 +175,7 @@ extern "C" int Calc::evalExpr(const std::string &expr, int &result) {
             {   
                 if (var_exist(operand2) == 0)       // check whether operand2 exist in dictionary
                 {
+                    pthread_mutex_unlock(&this->lock);
                     return 0;
                 }
 
@@ -168,22 +183,27 @@ extern "C" int Calc::evalExpr(const std::string &expr, int &result) {
                 {
                 case '+':
                     result = std::stoi(operand1) + var_dict.at(operand2);
+                    pthread_mutex_unlock(&this->lock);
                     return 1;
                     break;
                 case '-':
                     result = std::stoi(operand1) - var_dict.at(operand2);
+                    pthread_mutex_unlock(&this->lock);
                     return 1;
                     break;
                 case '*':
                     result = std::stoi(operand1) * var_dict.at(operand2);
+                    pthread_mutex_unlock(&this->lock);
                     return 1;
                     break;
                 case '/':
                     if (var_dict.at(operand2) == 0) {
                         // std::cout << "Expression is invalid (attempt to divide by 0)." << std::endl;
+                        pthread_mutex_unlock(&this->lock);
                         return 0;
                     }
                     result = std::stoi(operand1) / var_dict.at(operand2);
+                    pthread_mutex_unlock(&this->lock);
                     return 1;
                     break;
                 default:
@@ -195,6 +215,7 @@ extern "C" int Calc::evalExpr(const std::string &expr, int &result) {
             {   
                 if (var_exist(operand1) == 0 || var_exist(operand2) == 0)       // return 0 is either operand1 or operand2 is not in dictionary
                 {
+                    pthread_mutex_unlock(&this->lock);
                     return 0;
                 }
 
@@ -202,22 +223,27 @@ extern "C" int Calc::evalExpr(const std::string &expr, int &result) {
                 {
                 case '+':
                     result = var_dict.at(operand1) + var_dict.at(operand2);
+                    pthread_mutex_unlock(&this->lock);
                     return 1;
                     break;
                 case '-':
                     result = var_dict.at(operand1) - var_dict.at(operand2);
+                    pthread_mutex_unlock(&this->lock);
                     return 1;
                     break;
                 case '*':
                     result = var_dict.at(operand1) * var_dict.at(operand2);
+                    pthread_mutex_unlock(&this->lock);
                     return 1;
                     break;
                 case '/':
                     if (var_dict.at(operand2) == 0) {
                         // std::cout << "Expression is invalid (attempt to divide by 0)." << std::endl;
+                        pthread_mutex_unlock(&this->lock);
                         return 0;
                     }
                     result = var_dict.at(operand1) / var_dict.at(operand2);
+                    pthread_mutex_unlock(&this->lock);
                     return 1;
                     break;
                 default:
@@ -234,6 +260,7 @@ extern "C" int Calc::evalExpr(const std::string &expr, int &result) {
                     var_dict.at(operand1) = std::stoi(operand2);
                 }
                 result = var_dict.at(operand1);
+                pthread_mutex_unlock(&this->lock);
                 return 1;
             }
             // VAR = VAR
@@ -241,6 +268,7 @@ extern "C" int Calc::evalExpr(const std::string &expr, int &result) {
             {   
                 if (var_exist(operand2) == 0)       // return 0 if operand2 is not in dictionary 
                 {
+                    pthread_mutex_unlock(&this->lock);
                     return 0;
                 }
                  else if (var_exist(operand1) == 0)     // insert into dictionary if operand1 does not exist
@@ -250,6 +278,7 @@ extern "C" int Calc::evalExpr(const std::string &expr, int &result) {
                     var_dict.at(operand1) = var_dict.at(operand2);
                 }
                 result = var_dict.at(operand1);
+                pthread_mutex_unlock(&this->lock);
                 return 1;
             }
             
@@ -267,6 +296,7 @@ extern "C" int Calc::evalExpr(const std::string &expr, int &result) {
 
             if (op1 != "=" || is_variable(var) == 0)        // return 0 if format invalid
             {
+                pthread_mutex_unlock(&this->lock);
                 return 0;
             }
             
@@ -287,6 +317,7 @@ extern "C" int Calc::evalExpr(const std::string &expr, int &result) {
                 case '/':
                     if (std::stoi(operand2) == 0) {
                         // std::cout << "Expression is invalid (attempt to divide by 0)." << std::endl;
+                        pthread_mutex_unlock(&this->lock);
                         return 0;
                     }
                     temp_res = std::stoi(operand1) / std::stoi(operand2);
@@ -300,6 +331,7 @@ extern "C" int Calc::evalExpr(const std::string &expr, int &result) {
             {   
                 if (var_exist(operand1) == 0)
                 {
+                    pthread_mutex_unlock(&this->lock);
                     return 0;       // var1 does not exist in dictionary
                 }
 
@@ -317,6 +349,7 @@ extern "C" int Calc::evalExpr(const std::string &expr, int &result) {
                 case '/':
                     if (std::stoi(operand2) == 0) {
                         // std::cout << "Expression is invalid (attempt to divide by 0)." << std::endl;
+                        pthread_mutex_unlock(&this->lock);
                         return 0;
                     }
                     temp_res = var_dict.at(operand1) / std::stoi(operand2);
@@ -330,30 +363,28 @@ extern "C" int Calc::evalExpr(const std::string &expr, int &result) {
             {   
                 if (var_exist(operand2) == 0)
                 {
+                    pthread_mutex_unlock(&this->lock);
                     return 0;
                 }
 
                 switch (op2[0])
                 {
                 case '+':
-                    result = std::stoi(operand1) + var_dict.at(operand2);
-                    return 1;
+                    temp_res = std::stoi(operand1) + var_dict.at(operand2);
                     break;
                 case '-':
-                    result = std::stoi(operand1) - var_dict.at(operand2);
-                    return 1;
+                    temp_res = std::stoi(operand1) - var_dict.at(operand2);
                     break;
                 case '*':
-                    result = std::stoi(operand1) * var_dict.at(operand2);
-                    return 1;
+                    temp_res = std::stoi(operand1) * var_dict.at(operand2);
                     break;
                 case '/':
                     if (var_dict.at(operand2) == 0) {
                         // std::cout << "Expression is invalid (attempt to divide by 0)." << std::endl;
+                        pthread_mutex_unlock(&this->lock);
                         return 0;
                     }
-                    result = std::stoi(operand1) / var_dict.at(operand2);
-                    return 1;
+                    temp_res = std::stoi(operand1) / var_dict.at(operand2);
                     break;
                 default:
                     break;
@@ -364,6 +395,7 @@ extern "C" int Calc::evalExpr(const std::string &expr, int &result) {
             {   
                 if (var_exist(operand1) == 0 || var_exist(operand2) == 0)
                 {
+                    pthread_mutex_unlock(&this->lock);
                     return 0;       // var1 or var2 does not exist in dictionary
                 }
 
@@ -371,23 +403,20 @@ extern "C" int Calc::evalExpr(const std::string &expr, int &result) {
                 {
                 case '+':
                     temp_res = var_dict.at(operand1) + var_dict.at(operand2);
-                    return 1;
                     break;
                 case '-':
                     temp_res = var_dict.at(operand1) - var_dict.at(operand2);
-                    return 1;
                     break;
                 case '*':
                     temp_res = var_dict.at(operand1) * var_dict.at(operand2);
-                    return 1;
                     break;
                 case '/':
                     if (var_dict.at(operand2) == 0) {
                         // std::cout << "Expression is invalid (attempt to divide by 0)." << std::endl;
+                        pthread_mutex_unlock(&this->lock);
                         return 0;
                     }
                     temp_res = var_dict.at(operand1) / var_dict.at(operand2);
-                    return 1;
                     break;
                 default:
                     break;
@@ -402,11 +431,13 @@ extern "C" int Calc::evalExpr(const std::string &expr, int &result) {
                 var_dict.at(var) = temp_res;
             }
             result = temp_res;
+            pthread_mutex_unlock(&this->lock);
             return 1;
             break;
         }
         default:
         {
+            pthread_mutex_unlock(&this->lock);
             return 0;
         }
     }

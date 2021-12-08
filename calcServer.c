@@ -29,8 +29,6 @@ int main(int argc, char **argv) {
 	struct Calc *calc = calc_create();
 	const char *port = argv[1];
 
-	pthread_mutex_init(&calc->lock, NULL);
-
 	int server_fd = open_listenfd((char*) port);
 	if (server_fd < 0) { return 0; } // fatal error
 
