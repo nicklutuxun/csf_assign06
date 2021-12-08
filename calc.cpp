@@ -9,7 +9,7 @@
 #include <algorithm>
 #include <pthread.h>
 
-struct Calc {
+struct Calc{
 private:
     // fields
     std::map<std::string, int> var_dict;
@@ -62,8 +62,9 @@ extern "C" int calc_eval(struct Calc *calc, const char *expr, int *result) {
 extern "C" int Calc::evalExpr(const std::string &expr, int &result) {
     std::vector<std::string> tokens = tokenize(expr);       // tokenize the expression
     int num_tokens = tokens.size();     
-    
+
     //  switch to correct number of tokens
+    pthread_mutex_lock(&this->lock);
     switch (num_tokens)
     {
         case 1:
@@ -409,6 +410,7 @@ extern "C" int Calc::evalExpr(const std::string &expr, int &result) {
             return 0;
         }
     }
+    pthread_mutex_unlock(&this->lock);
     return 0;
 }
 
