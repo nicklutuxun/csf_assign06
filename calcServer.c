@@ -9,15 +9,12 @@ int chat_with_client(struct Calc *calc, int client_fd);
 struct ConnInfo {
 	int clientfd;
 	struct Calc *calc;
-	pthread_mutex_t lock;
 };
 
 void *worker(void *arg) {
 	struct ConnInfo *info = arg;
 	pthread_detach(pthread_self());
-	pthread_mutex_lock(&info->lock);
 	chat_with_client(info->calc, info->clientfd);
-	pthread_mutex_unlock(&info->lock);
 	close(info->clientfd);
 	free(info);
 
@@ -30,8 +27,9 @@ int main(int argc, char **argv) {
 	}
 
 	struct Calc *calc = calc_create();
-
 	const char *port = argv[1];
+
+	pthread_mutex_init(&calc->lock, NULL);
 
 	int server_fd = open_listenfd((char*) port);
 	if (server_fd < 0) { return 0; } // fatal error
@@ -45,11 +43,8 @@ int main(int argc, char **argv) {
 		}		// fatal: Error accepting client connection
 		
 		struct ConnInfo *info = malloc(sizeof(struct ConnInfo));
-		pthread_mutex_init(&info->lock, NULL);
-		pthread_mutex_lock(&info->lock);
 		info->clientfd = client_fd;
 		info->calc = calc;
-		pthread_mutex_unlock(&info->lock);
 
 		pthread_t thr_id;
 		if (pthread_create(&thr_id, NULL, worker, info) != 0)
@@ -57,8 +52,6 @@ int main(int argc, char **argv) {
 			printf("Fatal: pthread_create failed");
 			return 0;		 // fatal: pthread_create failed
 		}
-		
-		pthread_mutex_destroy(&info->lock);
 	}
 	close(server_fd);
 
