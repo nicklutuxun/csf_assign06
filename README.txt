@@ -5,7 +5,7 @@ Project Members:
 Contributions:
 Assignment 6:
     Tuxun Lu: Create threads for each client connection + minor synchronization
-    Jiarui Chen: 
+    Jiarui Chen: Synchronization + debugging + README
 
 We use mutex to ensure the calculator instance's shared data is safe to access from multiple threads.
 
