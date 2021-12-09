@@ -1,5 +1,11 @@
-Tuxun Lu tlu32
-Jiarui Chen jchen324
+Project Members: 
+    Tuxun Lu tlu32
+    Jiarui Chen jchen324
+
+Contributions:
+Assignment 6:
+    Tuxun Lu: Create threads for each client connection + minor synchronization
+    Jiarui Chen: 
 
 We use mutex to ensure the calculator instance's shared data is safe to access from multiple threads.
 
